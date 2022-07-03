@@ -32,10 +32,15 @@ const ChangePass = () => {
       <Form.Item
         label="Mật khẩu"
         name="password"
+        required={false}
         rules={[
           {
+            min: 8,
+            message: "Vui lòng nhập đủ 8 ký tự",
+          },
+          {
             required: true,
-            message: "Không được bỏ trống",
+            message: "Vui lòng nhập mật khẩu",
           },
         ]}
       >
@@ -44,7 +49,8 @@ const ChangePass = () => {
       <Form.Item
         label="Nhập lại mật khẩu"
         name="passwordConfirm"
-        rules={[{ required: true, message: "Không được bỏ trống" }]}
+        required={false}
+        rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
       >
         <Input.Password size="large" style={{ borderRadius: "8px" }} />
       </Form.Item>
