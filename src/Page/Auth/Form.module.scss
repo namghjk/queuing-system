@@ -19,6 +19,9 @@
     outline: none;
     border-color: #ff9138;
     background-color: #ff9138;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     &:hover {
       background-color: #ff9138;
     }
