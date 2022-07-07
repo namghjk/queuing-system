@@ -1,10 +1,19 @@
 import { Form, Input, Button } from "antd";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "../Auth/Form.module.scss";
 
+interface formValue {
+  username: string;
+  password: string;
+}
+
 const LoginForm = () => {
-  const onFinish = () => {};
+  const navigate = useNavigate();
+  const onFinish = (value: formValue) => {
+    navigate("/dashboard");
+    console.log(value);
+  };
 
   return (
     <div>
@@ -12,6 +21,7 @@ const LoginForm = () => {
         <Form.Item
           label="Tên đăng nhập"
           name="username"
+          required={false}
           rules={[
             {
               required: true,
@@ -24,6 +34,7 @@ const LoginForm = () => {
         <Form.Item
           label="Password"
           name="password"
+          required={false}
           rules={[{ required: true, message: "Không được bỏ trống" }]}
         >
           <Input.Password size="large" style={{ borderRadius: "8px" }} />

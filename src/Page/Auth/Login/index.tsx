@@ -1,12 +1,12 @@
 import { Col, Image, Row } from "antd";
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import logo from "../../Assets/logo.svg";
-import LoginForm from "./LoginForm";
-import ChangePass from "./ChangePass";
-import ForgotPass from "./ForgotPass";
-import illustrationLogin from "../../Assets/illustrationLogin.svg";
-import styles from "../Auth/Login.module.scss";
+import logo from "../../../Assets/logo.svg";
+import LoginForm from "../LoginForm";
+import ChangePass from "../ChangePass/ChangePass";
+import ForgotPass from "../ForgoPass/ForgotPass";
+import illustrationLogin from "../../../Assets/illustrationLogin.svg";
+import styles from "../Login.module.scss";
 
 const Login = () => {
   return (

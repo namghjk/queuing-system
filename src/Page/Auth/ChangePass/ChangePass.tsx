@@ -1,7 +1,7 @@
 import { Button, Form, Input, Typography } from "antd";
 import clsx from "clsx";
 import { Link, useNavigate } from "react-router-dom";
-import styles from "./Form.module.scss";
+import styles from "../Form.module.scss";
 
 interface formValue {
   password: string;

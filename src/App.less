@@ -1,0 +1,84 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import "~antd/dist/antd.less";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Nunito", sans-serif;
+}
+
+.ant-menu-vertical > .ant-menu-item {
+  height: 48px;
+  line-height: 48px;
+}
+
+.ant-menu-item {
+  display: flex;
+  align-items: center;
+}
+
+.ant-menu-item-selected,
+.ant-menu-item-selected a {
+  color: #ffffff !important;
+}
+
+.ant-menu-submenu-selected {
+  background-color: #ff7506 !important;
+  color: #ffffff !important;
+}
+
+.ant-menu-item-active,
+.ant-menu-submenu-active {
+  color: #ff7506;
+  background-color: #fff2e7;
+}
+
+.ant-menu-submenu-title {
+  display: flex;
+  align-items: center;
+}
+
+.ant-menu-vertical > .ant-menu-submenu > .ant-menu-submenu-title {
+  height: 48px;
+  line-height: 48px;
+}
+
+.ant-menu-submenu-expand-icon,
+.ant-menu-submenu-arrow {
+  color: inherit;
+}
+
+.ant-table-thead tr .ant-table-cell {
+  font-size: 16px;
+}
+
+.ant-table-tbody tr:nth-child(even) {
+  background-color: #fff2e7;
+}
+
+.ant-list-header {
+  padding: 0 !important;
+}
+
+.ant-badge-status-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.ant-progress-inner {
+  width: 60px !important;
+  height: 60px !important;
+  font-size: 14px !important;
+  font-weight: 700;
+}
+
+.ant-picker-content {
+  height: 100px !important;
+}
+.ant-picker-content th {
+  color: #ff7506 !important;
+}
