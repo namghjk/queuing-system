@@ -81,7 +81,7 @@ const index = () => {
                 className={styles.cardContainer}
                 bodyStyle={{ padding: "12px" }}
               >
-                <Space size={12} style={{ marginRight: "50px" }}>
+                <Space size={12}>
                   <CalendarOutlined
                     className={styles.icon}
                     style={{
@@ -120,7 +120,7 @@ const index = () => {
                 className={styles.cardContainer}
                 bodyStyle={{ padding: "12px" }}
               >
-                <Space size={12} style={{ marginRight: "50px" }}>
+                <Space size={12}>
                   <CalendarOutlined
                     className={styles.icon}
                     style={{
@@ -159,7 +159,7 @@ const index = () => {
                 className={styles.cardContainer}
                 bodyStyle={{ padding: "12px" }}
               >
-                <Space size={12} style={{ marginRight: "50px" }}>
+                <Space size={12}>
                   <CalendarOutlined
                     className={styles.icon}
                     style={{
@@ -198,7 +198,7 @@ const index = () => {
                 className={styles.cardContainer}
                 bodyStyle={{ padding: "12px" }}
               >
-                <Space size={12} style={{ marginRight: "50px" }}>
+                <Space size={12}>
                   <CalendarOutlined
                     className={styles.icon}
                     style={{
