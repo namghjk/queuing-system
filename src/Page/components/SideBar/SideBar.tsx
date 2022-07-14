@@ -41,7 +41,7 @@ const items: MenuItem[] = [
   ),
   getItem("/devices", <Link to="/devices">Thiết bị</Link>, <DesktopOutlined />),
   getItem("/services", <Link to="/services">Dịch vụ</Link>, <WechatOutlined />),
-  getItem("/provider", <Link to="/provider">Cấp số</Link>, <CodepenOutlined />),
+  getItem("/Provider", <Link to="/Provider">Cấp số</Link>, <CodepenOutlined />),
   getItem("/report", <Link to="/report">Báo cáo</Link>, <FileTextOutlined />),
   getItem(
     "setting",

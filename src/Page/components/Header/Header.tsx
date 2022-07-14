@@ -95,7 +95,7 @@ const Header = () => {
             )}
           />
         </div>
-        <Link to="/infor" className={styles.inforContainer}>
+        <Link to="/info" className={styles.inforContainer}>
           <Avatar src={avatarImage} className={styles.avatar} />
           <Space size={0} direction="vertical" style={{ lineHeight: "18px" }}>
             <Text className={styles.text}>Xin chào</Text>
