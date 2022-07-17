@@ -61,7 +61,7 @@ const Home = () => {
               <Route path="/Services/*" element={<Services />} />
               <Route path="/Provider/*" element={<Provider />} />
               <Route path="/report/*" element={<Report />} />
-              <Route path="/settings/*" element={<Settings />} />
+              <Route path="/setting/*" element={<Settings />} />
               <Route path="/info" element={<Info />} />
             </Routes>
           </Content>

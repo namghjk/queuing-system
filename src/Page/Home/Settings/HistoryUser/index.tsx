@@ -1,10 +1,10 @@
 import { Route, Routes } from "react-router-dom";
-import ReportTable from "./ReportTable";
+import HistoryUserTable from "./HistoryUserTable";
 
 const index = () => {
   return (
     <Routes>
-      <Route path="/" element={<ReportTable />} />
+      <Route path="/" element={<HistoryUserTable />} />
     </Routes>
   );
 };
