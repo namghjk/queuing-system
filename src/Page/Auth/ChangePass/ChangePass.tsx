@@ -1,5 +1,9 @@
-import { Button, Form, Input, Typography } from "antd";
+import { useEffect, useState } from "react";
+import { Button, Col, Form, Input, Row, Typography } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import clsx from "clsx";
+import { useAppDispatch, useAppSelector } from "../../../store/index";
+import { userSelector, updateUser } from "../../../store/reducers/userSlice";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "../Form.module.scss";
 
@@ -10,15 +14,35 @@ interface formValue {
 
 const ChangePass = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { authLoading, userId } = useAppSelector(userSelector);
+
+  const [message, setMessage] = useState<string>("");
 
   const onFinish = (value: formValue) => {
-    console.log(value);
     if (value.password === value.passwordConfirm) {
-      navigate("/auth/login");
+      setMessage("");
+      dispatch(
+        updateUser({
+          id: userId,
+          value: {
+            password: value.password,
+          },
+        })
+      ).then(() => {
+        navigate("/auth/login");
+      });
+      // .catch(() => {setMessage("Failed to update user")})
     } else {
-      alert("Password is not match");
+      setMessage("Mật khẩu không khớp");
     }
   };
+
+  useEffect(() => {
+    if (!userId) {
+      navigate("/auth/forgot-password");
+    }
+  }, [userId]);
   return (
     <Form
       name="login"
@@ -32,15 +56,10 @@ const ChangePass = () => {
       <Form.Item
         label="Mật khẩu"
         name="password"
-        required={false}
         rules={[
           {
-            min: 8,
-            message: "Vui lòng nhập đủ 8 ký tự",
-          },
-          {
             required: true,
-            message: "Vui lòng nhập mật khẩu",
+            message: "Không được bỏ trống",
           },
         ]}
       >
@@ -49,15 +68,38 @@ const ChangePass = () => {
       <Form.Item
         label="Nhập lại mật khẩu"
         name="passwordConfirm"
-        required={false}
-        rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
+        help={
+          message ? (
+            <div className={styles.warningWrapper}>
+              <Row
+                justify="start"
+                align="middle"
+                className={styles.warningContainer}
+              >
+                <Col>
+                  <InfoCircleOutlined style={{ fontSize: 20 }} />
+                </Col>
+                <Col>
+                  <Typography.Text className={styles.warningText}>
+                    {message}
+                  </Typography.Text>
+                </Col>
+              </Row>
+            </div>
+          ) : undefined
+        }
       >
         <Input.Password size="large" style={{ borderRadius: "8px" }} />
       </Form.Item>
       <Form.Item>
         <div className={clsx(styles.buttonContainer)}>
-          <Button className={clsx(styles.btn)} type="primary" htmlType="submit">
-            Xác nhận
+          <Button
+            className={clsx(styles.btn)}
+            type="primary"
+            htmlType="submit"
+            loading={authLoading}
+          >
+            {authLoading ? "" : "Xác nhận"}
           </Button>
         </div>
       </Form.Item>

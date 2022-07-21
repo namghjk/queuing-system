@@ -46,30 +46,55 @@ const data = [
     name: "Bác sĩ",
     amountOfUser: 6,
     description: "Thực hiện nhiệm vụ về thống kê số liệu và tổng hợp số liệu",
+    update: (
+      <Link to="./edit" className={styles.link}>
+        Chi tiết
+      </Link>
+    ),
   },
   {
     key: "3",
     name: "Lễ tân",
     amountOfUser: 6,
     description: "Thực hiện nhiệm vụ về thống kê số liệu và tổng hợp số liệu",
+    update: (
+      <Link to="./edit" className={styles.link}>
+        Chi tiết
+      </Link>
+    ),
   },
   {
     key: "4",
     name: "Quản lý",
     amountOfUser: 6,
     description: "Thực hiện nhiệm vụ về thống kê số liệu và tổng hợp số liệu",
+    update: (
+      <Link to="./edit" className={styles.link}>
+        Chi tiết
+      </Link>
+    ),
   },
   {
     key: "5",
     name: "Admin",
     amountOfUser: 6,
     description: "Thực hiện nhiệm vụ về thống kê số liệu và tổng hợp số liệu",
+    update: (
+      <Link to="./edit" className={styles.link}>
+        Chi tiết
+      </Link>
+    ),
   },
   {
     key: "6",
     name: "Superadmin",
     amountOfUser: 6,
     description: "Thực hiện nhiệm vụ về thống kê số liệu và tổng hợp số liệu",
+    update: (
+      <Link to="./edit" className={styles.link}>
+        Chi tiết
+      </Link>
+    ),
   },
 ];
 const ManageRoleTable = () => {

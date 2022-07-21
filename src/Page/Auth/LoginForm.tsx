@@ -1,57 +1,55 @@
-import { Form, Input, Button } from "antd";
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import styles from "../Auth/Form.module.scss";
+import clsx from "clsx";
+import { Col, Row } from "antd";
+import { Route, Routes } from "react-router-dom";
+import LoginForm from "./Login";
+import ChangePass from "./ChangePass/ChangePass";
+import ForgotPass from "./ForgoPass/ForgotPass";
+import loginImage from "../../Assets/illustrationLogin.svg";
+import loginImage2 from "../../Assets/illustrationHelp.svg";
+import Logo from "../../Assets/logo.svg";
+import styles from "./Login.module.scss";
 
-interface formValue {
-  username: string;
-  password: string;
-}
-
-const LoginForm = () => {
-  const navigate = useNavigate();
-  const onFinish = (value: formValue) => {
-    navigate("/dashboard");
-    console.log(value);
-  };
-
+const Login = () => {
   return (
-    <div>
-      <Form name="login" layout="vertical" onFinish={onFinish}>
-        <Form.Item
-          label="Tên đăng nhập"
-          name="username"
-          required={false}
-          rules={[
-            {
-              required: true,
-              message: "Không được bỏ trống",
-            },
-          ]}
-        >
-          <Input size="large" style={{ borderRadius: "8px" }} />
-        </Form.Item>
-        <Form.Item
-          label="Password"
-          name="password"
-          required={false}
-          rules={[{ required: true, message: "Không được bỏ trống" }]}
-        >
-          <Input.Password size="large" style={{ borderRadius: "8px" }} />
-        </Form.Item>
-        <Form.Item>
-          <div className={styles.buttonContainer}>
-            <Button className={styles.btn} type="primary" htmlType="submit">
-              Đăng nhập
-            </Button>
-            <Link className={styles.link} to="/auth/forgot-password">
-              Quên mật khẩu ?
-            </Link>
+    <>
+      <Row style={{ height: "100vh" }}>
+        <Col span={10} style={{ background: "#F6F6F6" }}>
+          <div className={clsx(styles.logo)}>
+            <img src={Logo} alt="Alta" />
           </div>
-        </Form.Item>
-      </Form>
-    </div>
+          <div className={clsx(styles.formContainer)}>
+            <Routes>
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/change-password" element={<ChangePass />} />
+              <Route path="/forgot-password" element={<ForgotPass />} />
+            </Routes>
+          </div>
+        </Col>
+        <Col span={14}>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <img className={styles.image} src={loginImage} alt="Alta" />
+              }
+            />
+            <Route
+              path="/change-password"
+              element={
+                <img className={styles.image} src={loginImage2} alt="Alta" />
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <img className={styles.image} src={loginImage2} alt="Alta" />
+              }
+            />
+          </Routes>
+        </Col>
+      </Row>
+    </>
   );
 };
 
-export default LoginForm;
+export default Login;

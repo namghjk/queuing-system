@@ -1,35 +1,93 @@
-import { Col, Image, Row } from "antd";
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import logo from "../../../Assets/logo.svg";
-import LoginForm from "../LoginForm";
-import ChangePass from "../ChangePass/ChangePass";
-import ForgotPass from "../ForgoPass/ForgotPass";
-import illustrationLogin from "../../../Assets/illustrationLogin.svg";
-import styles from "../Login.module.scss";
+import { Button, Col, Form, Input, Row, Typography } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import clsx from "clsx";
+import { Link, useNavigate } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../../../store/index";
+import { userSelector, login } from "../../../store/reducers/userSlice";
+import styles from "../Form.module.scss";
 
-const Login = () => {
+interface formValue {
+  username: string;
+  password: string;
+}
+
+const LoginForm = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { authLoading, user, message } = useAppSelector(userSelector);
+
+  const onFinish = (value: formValue) => {
+    dispatch(login(value)).then((data) => {
+      if (data.payload) {
+        navigate("/dashboard");
+      }
+    });
+  };
+
   return (
-    <Row style={{ height: "100vh" }}>
-      <Col span={10} style={{ background: "#F6F6F6" }}>
-        <div className={styles.logo}>
-          <img src={logo} alt="Alta" />
+    <Form
+      name="login"
+      layout="vertical"
+      className={clsx(styles.form)}
+      onFinish={onFinish}
+    >
+      <Form.Item label="Tên đăng nhập" name="username">
+        <Input
+          style={{ borderRadius: "8px" }}
+          status={message.fail ? "error" : undefined}
+          size="large"
+          disabled={authLoading}
+        />
+      </Form.Item>
+      <Form.Item
+        label="Password"
+        name="password"
+        // rules={[{ required: true, message: "Không được bỏ trống" }]}
+        help={
+          message.fail ? (
+            <div className={styles.warningWrapper}>
+              <Row
+                justify="start"
+                align="middle"
+                className={styles.warningContainer}
+              >
+                <Col>
+                  <InfoCircleOutlined style={{ fontSize: 20 }} />
+                </Col>
+                <Col>
+                  <Typography.Text className={styles.warningText}>
+                    {message.text}
+                  </Typography.Text>
+                </Col>
+              </Row>
+            </div>
+          ) : undefined
+        }
+      >
+        <Input.Password
+          style={{ borderRadius: "8px" }}
+          status={message.fail ? "error" : undefined}
+          size="large"
+          disabled={authLoading}
+        />
+      </Form.Item>
+      <Form.Item>
+        <div className={clsx(styles.buttonContainer)}>
+          <Button
+            className={clsx(styles.btn)}
+            type="primary"
+            htmlType="submit"
+            loading={authLoading}
+          >
+            {authLoading ? "" : "Đăng nhập"}
+          </Button>
+          <Link className={clsx(styles.link)} to="/auth/forgot-password">
+            Quên mật khẩu ?
+          </Link>
         </div>
-        <div className={styles.formContainer}>
-          <Routes>
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/change-password" element={<ChangePass />} />
-            <Route path="/forgot-password" element={<ForgotPass />} />
-          </Routes>
-        </div>
-      </Col>
-      <Col span={14}>
-        <div className={styles.image}>
-          <img src={illustrationLogin} />
-        </div>
-      </Col>
-    </Row>
+      </Form.Item>
+    </Form>
   );
 };
 
-export default Login;
+export default LoginForm;
