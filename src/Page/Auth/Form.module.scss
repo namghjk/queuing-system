@@ -2,8 +2,20 @@
   text-align: center;
   .title {
     font-size: 22px;
-    font-weight: 700;
     margin-bottom: 12px;
+  }
+  .warningWrapper {
+    position: relative;
+    .warningContainer {
+      position: absolute;
+      color: #e73f3f;
+      top: 12px;
+      .warningText {
+        color: #e73f3f;
+        font-size: 14px;
+        margin-left: 6px;
+      }
+    }
   }
 }
 .buttonContainer {
@@ -15,16 +27,6 @@
   .btn {
     width: 160px;
     height: 40px;
-    border-radius: 8px;
-    outline: none;
-    border-color: #ff9138;
-    background-color: #ff9138;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    &:hover {
-      background-color: #ff9138;
-    }
   }
   .link {
     font-size: 14px;
