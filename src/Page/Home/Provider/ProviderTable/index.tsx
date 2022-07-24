@@ -1,19 +1,23 @@
-import { CaretDownOutlined } from "@ant-design/icons";
-import {
-  Col,
-  DatePicker,
-  Form,
-  Row,
-  Select,
-  Space,
-  Table,
-  Typography,
-} from "antd";
+import { useEffect, useState } from "react";
+import { CaretDownOutlined, CaretRightOutlined } from "@ant-design/icons";
+import { Col, Form, Row, Select, Space, Table, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import moment, { Moment } from "moment";
+import { RangeValue } from "rc-picker/lib/interface";
 import { Link, useNavigate } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import {
+  providerNumberSelector,
+  getAll,
+} from "../../../../store/reducers/providerNumberSlice";
+import {
+  serviceSelector,
+  getAll as getAllService,
+} from "../../../../store/reducers/serviceSlice";
 import Status from "../../../components/Status";
 import ActionButton from "../../../components/ActionButton";
 import SearchInput from "../../../components/SearchInput";
+import DatePicker from "../../../components/DateRange";
 import styles from "../Provider.module.scss";
 
 const { Option } = Select;
@@ -61,71 +65,35 @@ const columns = [
   },
 ];
 
-const data = [
-  {
-    key: "1",
-    stt: "201001",
-    name: "Nguyễn Văn Hiền",
-    nameService: "Khám tổng quát",
-    time: new Date().toUTCString(),
-    timeExp: new Date().toUTCString(),
-    status: <Status type="waiting" text="Đang chờ" />,
-    src: "Kiosk",
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-  },
-  {
-    key: "2",
-    stt: "201002",
-    name: "Nguyễn Văn Hiền",
-    nameService: "Khám tai mũi họng",
-    time: new Date().toUTCString(),
-    timeExp: new Date().toUTCString(),
-    status: <Status type="waiting" text="Đang chờ" />,
-    src: "Hệ thống",
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-  },
-  {
-    key: "3",
-    stt: "201003",
-    name: "Nguyễn Văn Hiền",
-    nameService: "Khám tổng quát",
-    time: new Date().toUTCString(),
-    timeExp: new Date().toUTCString(),
-    status: <Status type="used" text="Đã sử dụng" />,
-    src: "Kiosk",
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-  },
-  {
-    key: "4",
-    stt: "201004",
-    name: "Nguyễn Văn Hiền",
-    nameService: "Khám tổng quát",
-    time: new Date().toUTCString(),
-    timeExp: new Date().toUTCString(),
-    status: <Status type="error" text="Bỏ qua" />,
-    src: "Kiosk",
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-  },
-];
-
 const ProviderTable = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading, providerNumbers } = useAppSelector(providerNumberSelector);
+  const { services } = useAppSelector(serviceSelector);
+  const [status, setStatus] = useState<string | null>(null);
+  const [src, setSrc] = useState<string>("");
+  const [service, setService] = useState<string>("");
+  const [keywords, setKeywords] = useState<string>("");
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
+
+  useEffect(() => {
+    dispatch(
+      getAll({
+        status,
+        src,
+        service,
+        keywords,
+        dateRange: dateRange
+          ? [dateRange[0] as Moment, dateRange[1] as Moment]
+          : null,
+      })
+    );
+  }, [status, src, service, keywords, dateRange]);
+
+  useEffect(() => {
+    dispatch(getAllService());
+  }, []);
+
   return (
     <div className={styles.section}>
       <Typography.Title className={styles.title} level={2}>
@@ -150,7 +118,9 @@ const ProviderTable = () => {
               >
                 <Select
                   size="large"
-                  defaultValue={null}
+                  defaultValue={""}
+                  value={service}
+                  onChange={(value) => setService(value)}
                   suffixIcon={
                     <CaretDownOutlined
                       style={{
@@ -160,10 +130,10 @@ const ProviderTable = () => {
                     />
                   }
                 >
-                  <Option value={null}>Tất cả</Option>
-                  <Option value="spk">Khám sản - Phụ khoa</Option>
-                  <Option value="rhm">Khám răng hàm mặt</Option>
-                  <Option value="tmh">Khám tai mũi họng</Option>
+                  <Option value={""}>Tất cả</Option>
+                  {services.map((service) => {
+                    return <Option value={service.id}>{service.name}</Option>;
+                  })}
                 </Select>
               </Form.Item>
               <Form.Item
@@ -177,6 +147,8 @@ const ProviderTable = () => {
                 <Select
                   size="large"
                   defaultValue={null}
+                  value={status}
+                  onChange={(value) => setStatus(value)}
                   suffixIcon={
                     <CaretDownOutlined
                       style={{
@@ -202,7 +174,9 @@ const ProviderTable = () => {
               >
                 <Select
                   size="large"
-                  defaultValue={null}
+                  defaultValue={""}
+                  value={src}
+                  onChange={(value) => setSrc(value)}
                   suffixIcon={
                     <CaretDownOutlined
                       style={{
@@ -212,9 +186,9 @@ const ProviderTable = () => {
                     />
                   }
                 >
-                  <Option value={null}>Tất cả</Option>
-                  <Option value="kisok">Kisok</Option>
-                  <Option value="system">Hệ thống</Option>
+                  <Option value={""}>Tất cả</Option>
+                  <Option value="Kisok">Kisok</Option>
+                  <Option value="Hệ thống">Hệ thống</Option>
                 </Select>
               </Form.Item>
               <Form.Item
@@ -224,12 +198,7 @@ const ProviderTable = () => {
                   </Typography.Text>
                 }
               >
-                <Form.Item noStyle>
-                  <DatePicker size="large" />
-                </Form.Item>
-                <Form.Item noStyle>
-                  <DatePicker size="large" />
-                </Form.Item>
+                <DatePicker onChange={setDateRange} />
               </Form.Item>
               <Form.Item
                 label={
@@ -238,7 +207,10 @@ const ProviderTable = () => {
                   </Typography.Text>
                 }
               >
-                <SearchInput placeholder="Nhập từ khóa" />
+                <SearchInput
+                  placeholder="Nhập từ khóa"
+                  onSearch={setKeywords}
+                />
               </Form.Item>
             </Space>
           </Col>
@@ -248,10 +220,54 @@ const ProviderTable = () => {
         <Col flex="auto">
           <Table
             columns={columns}
-            dataSource={data}
+            loading={loading}
+            dataSource={providerNumbers.map((providerNumber) => {
+              return {
+                key: providerNumber.id,
+                stt: providerNumber.number,
+                name: providerNumber.name,
+                nameService: providerNumber.service,
+                time: moment(providerNumber.timeGet.toDate()).format(
+                  "HH:mm - DD/MM/YYYY"
+                ),
+                timeExp: moment(providerNumber.timeExp.toDate()).format(
+                  "HH:mm - DD/MM/YYYY"
+                ),
+                status: (
+                  <Status
+                    type={
+                      providerNumber.status == "skip"
+                        ? "error"
+                        : providerNumber.status
+                    }
+                    text={
+                      providerNumber.status == "waiting"
+                        ? "Đang chờ"
+                        : providerNumber.status == "used"
+                        ? "Đã sử dụng"
+                        : "Bỏ qua"
+                    }
+                  />
+                ),
+                src: providerNumber.src,
+                detail: (
+                  <Link
+                    to={`./detail/${providerNumber.id}`}
+                    className={styles.link}
+                  >
+                    Chi tiết
+                  </Link>
+                ),
+              };
+            })}
             bordered
             size="middle"
-            pagination={{ position: ["bottomRight"] }}
+            pagination={{
+              defaultPageSize: 8,
+              position: ["bottomRight"],
+              showLessItems: true,
+              showSizeChanger: false,
+            }}
           />
         </Col>
         <Col flex="100px">

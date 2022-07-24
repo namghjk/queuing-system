@@ -4,101 +4,98 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   updateDoc,
-  where,
   setDoc,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { RootState } from "../index";
 
-export type roleType = {
+export type deviceType = {
   id?: string;
+  code: string;
   name: string;
-  description: string;
-  amountOfUser?: number;
-  authorityA: string[] | undefined;
-  authorityB: string[] | undefined;
-  authorityC: string[] | undefined;
+  username: string;
+  password: string;
+  type: string;
+  ip: string;
+  isActive: boolean;
+  isConnect: boolean;
+  services: string[];
 };
 
-export const addRole = createAsyncThunk(
-  "role/add",
-  async (values: roleType) => {
-    const newRole = doc(collection(db, "roles"));
-    await setDoc(newRole, values);
-    const roleRef = doc(db, "roles", newRole.id);
-    const roleSnap = await getDoc(roleRef);
-    return roleSnap;
+export const addDevice = createAsyncThunk(
+  "device/add",
+  async (values: deviceType) => {
+    const newDoc = doc(collection(db, "devices"));
+    await setDoc(newDoc, values);
+    const Ref = doc(db, "device", newDoc.id);
+    const Snap = await getDoc(Ref);
+    return Snap;
   }
 );
 
 interface Ifilter {
+  active: boolean | null;
+  connect: boolean | null;
   keywords: string;
 }
 
 export const getAll = createAsyncThunk(
-  "role/getAll",
+  "device/getAll",
   async (filter?: Ifilter) => {
-    let roles: roleType[] = [];
+    let devices: deviceType[] = [];
 
-    const queryRoles = await getDocs(collection(db, "roles"));
-    queryRoles.forEach((value) => {
-      roles.push({
+    const query = await getDocs(collection(db, "devices"));
+    query.forEach((value) => {
+      devices.push({
         id: value.id,
-        ...(value.data() as roleType),
+        ...(value.data() as deviceType),
       });
     });
-    for (const role of roles) {
-      const roleSnap = await getDocs(
-        query(collection(db, "user"), where("role", "==", role.id))
-      );
-      let amountOfUser = 0;
-      roleSnap.forEach((value) => {
-        amountOfUser += 1;
-      });
-      role.amountOfUser = amountOfUser;
-    }
     if (filter) {
+      if (filter.active != null)
+        devices = devices.filter((device) => device.isActive == filter.active);
+      if (filter.connect != null)
+        devices = devices.filter(
+          (device) => device.isConnect == filter.connect
+        );
       if (filter.keywords != "")
-        roles = roles.filter(
-          (role) =>
-            role.name.toLowerCase().includes(filter.keywords.toLowerCase()) ||
-            role.description
-              .toLowerCase()
-              .includes(filter.keywords.toLowerCase())
+        devices = devices.filter(
+          (device) =>
+            device.code.toLowerCase().includes(filter.keywords.toLowerCase()) ||
+            device.name.toLowerCase().includes(filter.keywords.toLowerCase()) ||
+            device.ip.toLowerCase().includes(filter.keywords.toLowerCase())
         );
     }
-    roles.reverse();
-    return roles;
+    devices.reverse();
+    return devices;
   }
 );
 
-export const get = createAsyncThunk("role/get", async (id: string) => {
-  let role: roleType;
+export const get = createAsyncThunk("device/get", async (id: string) => {
+  let device: deviceType;
 
-  const roleRef = doc(db, "roles", id);
-  const roleSnap = await getDoc(roleRef);
-  role = {
+  const deviceRef = doc(db, "devices", id);
+  const deviceSnap = await getDoc(deviceRef);
+  device = {
     id,
-    ...(roleSnap.data() as roleType),
+    ...(deviceSnap.data() as deviceType),
   };
-
-  return role;
+  return device;
 });
 
 export const update = createAsyncThunk(
-  "role/update",
-  async (value: roleType) => {
-    const roleRef = doc(db, "roles", value.id as string);
-    await updateDoc(roleRef, value);
+  "device/update",
+  async ({ id, ...value }: deviceType) => {
+    const ref = doc(db, "devices", id as string);
+    await updateDoc(ref, { ...value });
   }
 );
 
 interface defaultState {
   loading: boolean;
-  role: roleType | null;
-  roles: roleType[];
+  device: deviceType | null;
+  devices: deviceType[];
   message: {
     fail: boolean;
     text: string | undefined;
@@ -107,33 +104,33 @@ interface defaultState {
 
 const initialState: defaultState = {
   loading: false,
-  role: null,
-  roles: [],
+  device: null,
+  devices: [],
   message: {
     fail: false,
     text: "",
   },
 };
 
-const roleSlice = createSlice({
-  name: "role",
+const deviceSlice = createSlice({
+  name: "device",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(addRole.pending, (state, action) => {
+    builder.addCase(addDevice.pending, (state, action) => {
       state.loading = true;
     });
-    builder.addCase(addRole.fulfilled, (state, action) => {
+    builder.addCase(addDevice.fulfilled, (state, action) => {
       if (action.payload.exists()) {
         state.message.fail = false;
-        state.message.text = "Thêm vai trò thành công";
+        state.message.text = "Thêm thành công";
       } else {
         state.message.fail = true;
         state.message.text = "Đã xảy ra lỗi !";
       }
       state.loading = false;
     });
-    builder.addCase(addRole.rejected, (state, action) => {
+    builder.addCase(addDevice.rejected, (state, action) => {
       state.message.fail = true;
       state.message.text = action.error.message;
       state.loading = false;
@@ -144,7 +141,7 @@ const roleSlice = createSlice({
     });
     builder.addCase(getAll.fulfilled, (state, action) => {
       if (action.payload) {
-        state.roles = action.payload;
+        state.devices = action.payload;
         state.message.fail = false;
         state.message.text = "";
       } else {
@@ -164,7 +161,7 @@ const roleSlice = createSlice({
     });
     builder.addCase(get.fulfilled, (state, action) => {
       if (action.payload) {
-        state.role = action.payload;
+        state.device = action.payload;
         state.message.fail = false;
         state.message.text = "";
       } else {
@@ -195,10 +192,10 @@ const roleSlice = createSlice({
   },
 });
 
-const roleReducer = roleSlice.reducer;
+const deviceReducer = deviceSlice.reducer;
 
-export const roleSelector = (state: RootState) => state.roleReducer;
+export const deviceSelector = (state: RootState) => state.deviceReducer;
 
-export const {} = roleSlice.actions;
+export const {} = deviceSlice.actions;
 
-export default roleReducer;
+export default deviceReducer;

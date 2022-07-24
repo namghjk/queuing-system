@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
-import { Button, Col, Form, Input, Row, Typography } from "antd";
+import {
+  Button,
+  Col,
+  Form,
+  Input,
+  Row,
+  Typography,
+  message as notice,
+} from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import clsx from "clsx";
 import { useAppDispatch, useAppSelector } from "../../../store/index";
-import { userSelector, updateUser } from "../../../store/reducers/userSlice";
+import { userSelector, changePass } from "../../../store/reducers/userSlice";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "../Form.module.scss";
 
@@ -23,16 +31,18 @@ const ChangePass = () => {
     if (value.password === value.passwordConfirm) {
       setMessage("");
       dispatch(
-        updateUser({
+        changePass({
           id: userId,
-          value: {
-            password: value.password,
-          },
+          password: value.password,
         })
-      ).then(() => {
-        navigate("/auth/login");
+      ).then((data) => {
+        if (data.meta.requestStatus == "fulfilled") {
+          notice.success("Đổi mật khẩu thành công", 3);
+          navigate("/auth/login");
+        } else {
+          notice.error("Đã xảy ra lỗi", 3);
+        }
       });
-      // .catch(() => {setMessage("Failed to update user")})
     } else {
       setMessage("Mật khẩu không khớp");
     }

@@ -1,73 +1,147 @@
-import {
-  Calendar,
-  Card,
-  Col,
-  Form,
-  Layout,
-  Progress,
-  Row,
-  Select,
-  Space,
-  Tag,
-  Typography,
-} from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { Card, Col, Layout, Row, Select, Space, Typography } from "antd";
 import {
   DesktopOutlined,
   CalendarOutlined,
   CaretDownOutlined,
+  CustomerServiceOutlined,
+  CarryOutOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
-import { Line } from "@ant-design/plots";
-import Status from "../../components/Status/index";
+import {
+  Calendar,
+  DayRange,
+} from "@hassanmojab/react-modern-calendar-datepicker";
+import { Area } from "@ant-design/plots";
+import { useAppSelector, useAppDispatch } from "../../../store";
+import {
+  providerNumberSelector,
+  getAll,
+} from "../../../store/reducers/providerNumberSlice";
+import {
+  deviceSelector,
+  getAll as getAllDevice,
+} from "../../../store/reducers/deviceSlice";
+import {
+  serviceSelector,
+  getAll as getAllService,
+} from "../../../store/reducers/serviceSlice";
+import CardContent from "./CardContainer/CardContent";
+import CardSideBar from "./CardContainer/CardSideBar";
 import styles from "./Dashboard.module.scss";
 
 const { Sider, Content } = Layout;
 const { Option } = Select;
 
-const data = [
-  {
-    date: "01",
-    value: 3050,
-  },
-  {
-    date: "02",
-    value: 3250,
-  },
-  {
-    date: "03",
-    value: 3000,
-  },
-  {
-    date: "04",
-    value: 3900,
-  },
-  {
-    date: "05",
-    value: 4221,
-  },
-  {
-    date: "06",
-    value: 3000,
-  },
-  {
-    date: "07",
-    value: 3900,
-  },
-  {
-    date: "08",
-    value: 4221,
-  },
-];
+const iconCardStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "48px",
+  width: "48px",
+  fontSize: "24px",
+  borderRadius: "50%",
+};
 
-const index = () => {
+const Dashboard = () => {
+  const dispatch = useAppDispatch();
+  const { providerNumbers } = useAppSelector(providerNumberSelector);
+  const { devices } = useAppSelector(deviceSelector);
+  const { services } = useAppSelector(serviceSelector);
+  const [chartData, setChartData] = useState("date");
+  const [calendarValue, setCalendarValue] = useState<DayRange>({
+    from: null,
+    to: null,
+  });
+
+  const data = useMemo(() => {
+    let start = calendarValue.from ? calendarValue.from.day : 0;
+    let end = calendarValue.to ? calendarValue.to.day : 30;
+    let month = calendarValue.to
+      ? calendarValue.to.month
+      : new Date().getMonth() + 1;
+    let data1 = [];
+    switch (chartData) {
+      case "date":
+        for (let i = start; i <= end; i++) {
+          data1.push({
+            xField: i,
+            value: providerNumbers.filter((providerNumber) => {
+              return (
+                providerNumber.timeGet.toDate().getDate() === i &&
+                providerNumber.timeGet.toDate().getMonth() + 1 == month
+              );
+            }).length,
+          });
+        }
+        return data1;
+      case "week":
+        for (let i = 1; i <= 5; i++) {
+          data1.push({
+            xField: "Tuần " + i,
+            value: providerNumbers.filter((providerNumber) => {
+              return (
+                providerNumber.timeGet.toDate().getMonth() + 1 == month &&
+                providerNumber.timeGet.toDate().getDate() > (i - 1) * 7 &&
+                providerNumber.timeGet.toDate().getDate() <= i * 7
+              );
+            }).length,
+          });
+        }
+        return data1;
+      default:
+        for (let i = 1; i <= 12; i++) {
+          data1.push({
+            xField: i,
+            value: providerNumbers.filter((providerNumber) => {
+              return providerNumber.timeGet.toDate().getMonth() + 1 === i;
+            }).length,
+          });
+        }
+        console.log(data1);
+        return data1;
+    }
+  }, [chartData, calendarValue, providerNumbers]);
+
   const config = {
     data,
-    xField: "date",
+    xField: "xField",
     yField: "value",
-    // xAxis: {
-    //     tickCount: 5,
-    // },
     smooth: true,
+    xAxis: {
+      range: [0, 1],
+    },
+    tooltip: {
+      position: "top" as "left" | "right" | "top" | "bottom" | undefined,
+      domStyles: {
+        "g2-tooltip": {
+          width: "100px",
+          padding: "5px",
+          backgroundColor: "#5185F7",
+          borderRadius: "8px",
+          color: "#fff",
+          textAlign: "center",
+          fontSize: "14px",
+          fontWeight: 700,
+        },
+      },
+      customContent: (title: any, items: any): any => {
+        return <span>{items[0]?.value}</span>;
+      },
+    },
+    areaStyle: () => {
+      return {
+        fill: "l(90) 0:#5185F7 0.5:#5185F7 1:#fff",
+      };
+    },
   };
+
+  useEffect(() => {
+    dispatch(getAll());
+    dispatch(getAllService());
+    dispatch(getAllDevice());
+  }, []);
+
   return (
     <Layout>
       <Content style={{ marginRight: 410 }}>
@@ -77,160 +151,89 @@ const index = () => {
           </Typography.Title>
           <Row gutter={12}>
             <Col span={6}>
-              <Card
-                className={styles.cardContainer}
-                bodyStyle={{ padding: "12px" }}
-              >
-                <Space size={12}>
+              <CardContent
+                icon={
                   <CalendarOutlined
-                    className={styles.icon}
                     style={{
+                      ...iconCardStyle,
                       backgroundColor: "rgba(100, 147, 249, 0.2)",
                       color: "#6493F9",
                     }}
                   />
-                  <Typography.Text className={styles.text}>
-                    Số thứ tự đã cấp
-                  </Typography.Text>
-                </Space>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginTop: "12px",
-                  }}
-                >
-                  <Typography.Text className={styles.number}>
-                    4.422
-                  </Typography.Text>
-                  <Tag
-                    className={styles.tag}
-                    style={{
-                      backgroundColor: "rgba(255, 149, 1, 0.15)",
-                      color: "#FF9138",
-                    }}
-                  >
-                    32,41%
-                  </Tag>
-                </Space>
-              </Card>
+                }
+                title={"Số thứ tự đã cấp"}
+                number={providerNumbers.length}
+                tag={{
+                  color: "#FF9138",
+                  number: 32.41,
+                }}
+              />
             </Col>
             <Col span={6}>
-              <Card
-                className={styles.cardContainer}
-                bodyStyle={{ padding: "12px" }}
-              >
-                <Space size={12}>
-                  <CalendarOutlined
-                    className={styles.icon}
+              <CardContent
+                icon={
+                  <CarryOutOutlined
                     style={{
+                      ...iconCardStyle,
                       backgroundColor: "rgb(53, 199, 90, 0.2)",
                       color: "#35C75A",
                     }}
                   />
-                  <Typography.Text className={styles.text}>
-                    Số thứ tự đã sử dụng
-                  </Typography.Text>
-                </Space>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginTop: "12px",
-                  }}
-                >
-                  <Typography.Text className={styles.number}>
-                    4.422
-                  </Typography.Text>
-                  <Tag
-                    className={styles.tag}
-                    style={{
-                      backgroundColor: "rgba(231, 63, 63, 0.15)",
-                      color: "#E73F3F",
-                    }}
-                  >
-                    32,41%
-                  </Tag>
-                </Space>
-              </Card>
+                }
+                title={"Số thứ tự đã sử dụng"}
+                number={
+                  providerNumbers.filter((value) => value.status === "used")
+                    .length
+                }
+                tag={{
+                  color: "#E73F3F",
+                  number: 32.41,
+                }}
+              />
             </Col>
             <Col span={6}>
-              <Card
-                className={styles.cardContainer}
-                bodyStyle={{ padding: "12px" }}
-              >
-                <Space size={12}>
-                  <CalendarOutlined
-                    className={styles.icon}
+              <CardContent
+                icon={
+                  <CustomerServiceOutlined
                     style={{
+                      ...iconCardStyle,
                       backgroundColor: "rgba(255, 172, 106, 0.2)",
                       color: "#FFAC6A",
                     }}
                   />
-                  <Typography.Text className={styles.text}>
-                    Số thứ tự đang chờ
-                  </Typography.Text>
-                </Space>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginTop: "12px",
-                  }}
-                >
-                  <Typography.Text className={styles.number}>
-                    4.422
-                  </Typography.Text>
-                  <Tag
-                    className={styles.tag}
-                    style={{
-                      backgroundColor: "rgba(255, 149, 1, 0.15)",
-                      color: "#FF9138",
-                    }}
-                  >
-                    32,41%
-                  </Tag>
-                </Space>
-              </Card>
+                }
+                title={"Số thứ tự đang chờ"}
+                number={
+                  providerNumbers.filter((value) => value.status === "waiting")
+                    .length
+                }
+                tag={{
+                  color: "#FF9138",
+                  number: 32.41,
+                }}
+              />
             </Col>
             <Col span={6}>
-              <Card
-                className={styles.cardContainer}
-                bodyStyle={{ padding: "12px" }}
-              >
-                <Space size={12}>
-                  <CalendarOutlined
-                    className={styles.icon}
+              <CardContent
+                icon={
+                  <StarOutlined
                     style={{
+                      ...iconCardStyle,
                       backgroundColor: "rgba(248, 109, 109, 0.2)",
                       color: "#F86D6D",
                     }}
                   />
-                  <Typography.Text className={styles.text}>
-                    Số thứ tự đã bỏ qua
-                  </Typography.Text>
-                </Space>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginTop: "12px",
-                  }}
-                >
-                  <Typography.Text className={styles.number}>
-                    4.422
-                  </Typography.Text>
-                  <Tag
-                    className={styles.tag}
-                    style={{
-                      backgroundColor: "rgba(231, 63, 63, 0.15)",
-                      color: "#E73F3F",
-                    }}
-                  >
-                    32,41%
-                  </Tag>
-                </Space>
-              </Card>
+                }
+                title={"Số thứ tự đã bỏ qua"}
+                number={
+                  providerNumbers.filter((value) => value.status === "skip")
+                    .length
+                }
+                tag={{
+                  color: "#E73F3F",
+                  number: 32.41,
+                }}
+              />
             </Col>
           </Row>
           <Card className={styles.chartContainer}>
@@ -244,37 +247,54 @@ const index = () => {
             >
               <Space direction="vertical">
                 <Typography.Title className={styles.title}>
-                  Bảng thống kê theo ngày
+                  Bảng thống kê theo{" "}
+                  {chartData == "date"
+                    ? "ngày"
+                    : chartData == "week"
+                    ? "tuần"
+                    : "tháng"}
                 </Typography.Title>
                 <Typography.Text className={styles.text}>
-                  Tháng 7/2022
+                  {chartData == "month"
+                    ? "Năm "
+                    : "Tháng " +
+                      (calendarValue.to
+                        ? calendarValue.to.month
+                        : new Date().getMonth() + 1) +
+                      "/"}
+                  2022
                 </Typography.Text>
               </Space>
-              <Space style={{ display: "flex", alignItems: "center" }}>
+              <Space
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
                 <Typography.Text className={styles.label}>
                   Xem theo
                 </Typography.Text>
-                <Form.Item className={styles.selectContianer}>
-                  <Select
-                    size="large"
-                    defaultValue={"date"}
-                    suffixIcon={
-                      <CaretDownOutlined
-                        style={{
-                          fontSize: "20px",
-                          color: "#FF7506",
-                        }}
-                      />
-                    }
-                  >
-                    <Option value="date">Ngày</Option>
-                    <Option value="week">Tuần</Option>
-                    <Option value="month">Tháng</Option>
-                  </Select>
-                </Form.Item>
+                <Select
+                  className={styles.selectContianer}
+                  size="large"
+                  onChange={(value) => setChartData(value)}
+                  value={chartData}
+                  suffixIcon={
+                    <CaretDownOutlined
+                      style={{
+                        fontSize: "20px",
+                        color: "#FF7506",
+                      }}
+                    />
+                  }
+                >
+                  <Option value="date">Ngày</Option>
+                  <Option value="week">Tuần</Option>
+                  <Option value="month">Tháng</Option>
+                </Select>
               </Space>
             </Space>
-            <Line {...config} style={{ height: "300px" }} />
+            <Area {...config} style={{ height: "300px" }} />
           </Card>
         </div>
       </Content>
@@ -291,288 +311,85 @@ const index = () => {
           <Typography.Title className={styles.title}>
             Tổng quan
           </Typography.Title>
-          <Card
-            bodyStyle={{ padding: "0" }}
-            style={{
-              marginBottom: "12px",
-              boxShadow: "2px 2px 15px 0 rgba(70, 64, 67, 0.1)",
-            }}
-          >
-            <Row gutter={0}>
-              <Col span={12}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px 0 12px 16px",
-                  }}
-                >
-                  <Progress
-                    type="circle"
-                    percent={90}
-                    className={styles.chartCircle}
-                    strokeColor={"#FF7506"}
-                  />
-                  <Space direction="vertical" size={0}>
-                    <Typography.Title className={styles.number}>
-                      4.221
-                    </Typography.Title>
-                    <Space size={4}>
-                      <DesktopOutlined style={{ color: "#FF7506" }} />
-                      <span
-                        style={{
-                          color: "#FF7506",
-                          fontSize: "14px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Thiết bị
-                      </span>
-                    </Space>
-                  </Space>
-                </div>
-              </Col>
-              <Col span={12}>
-                <div
-                  style={{
-                    padding: "12px 0",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Row>
-                    <Col span={18}>
-                      <Status type="success" text="Đang hoạt động" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#FF7506",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        3.799
-                      </span>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col span={18}>
-                      <Status type="used" text="Ngưng hoạt động" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#FF7506",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        422
-                      </span>
-                    </Col>
-                  </Row>
-                </div>
-              </Col>
-            </Row>
-          </Card>
-          <Card
-            bodyStyle={{ padding: "0" }}
-            style={{
-              marginBottom: "12px",
-              boxShadow: "2px 2px 15px 0 rgba(70, 64, 67, 0.1)",
-            }}
-          >
-            <Row gutter={0}>
-              <Col span={12}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px 0 12px 16px",
-                  }}
-                >
-                  <Progress
-                    type="circle"
-                    percent={76}
-                    className={styles.chartCircle}
-                    strokeColor={"#4277FF"}
-                  />
-                  <Space direction="vertical" size={0}>
-                    <Typography.Title className={styles.number}>
-                      4.221
-                    </Typography.Title>
-                    <Space size={4}>
-                      <DesktopOutlined style={{ color: "#4277FF" }} />
-                      <span
-                        style={{
-                          color: "#4277FF",
-                          fontSize: "14px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Dịch vụ
-                      </span>
-                    </Space>
-                  </Space>
-                </div>
-              </Col>
-              <Col span={12}>
-                <div
-                  style={{
-                    padding: "12px 0",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Row>
-                    <Col span={18}>
-                      <Status type="success" text="Đang hoạt động" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#4277FF",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        210
-                      </span>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col span={18}>
-                      <Status type="used" text="Ngưng hoạt động" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#4277FF",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        66
-                      </span>
-                    </Col>
-                  </Row>
-                </div>
-              </Col>
-            </Row>
-          </Card>
-          <Card
-            bodyStyle={{ padding: "0" }}
-            style={{
-              marginBottom: "12px",
-              boxShadow: "2px 2px 15px 0 rgba(70, 64, 67, 0.1)",
-            }}
-          >
-            <Row gutter={0}>
-              <Col span={12}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px 0 12px 16px",
-                  }}
-                >
-                  <Progress
-                    type="circle"
-                    percent={86}
-                    className={styles.chartCircle}
-                    strokeColor={"#35C75A"}
-                  />
-                  <Space direction="vertical" size={0}>
-                    <Typography.Title className={styles.number}>
-                      4.221
-                    </Typography.Title>
-                    <Space size={4}>
-                      <DesktopOutlined style={{ color: "#35C75A" }} />
-                      <span
-                        style={{
-                          color: "#35C75A",
-                          fontSize: "14px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Cấp số
-                      </span>
-                    </Space>
-                  </Space>
-                </div>
-              </Col>
-              <Col span={12}>
-                <div
-                  style={{
-                    padding: "12px 0",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Row>
-                    <Col span={18}>
-                      <Status type="success" text="Đã sử dụng" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#35C75A",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        3.799
-                      </span>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col span={18}>
-                      <Status type="used" text="Đang chờ" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#35C75A",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        486
-                      </span>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col span={18}>
-                      <Status type="error" text="Bỏ qua" />
-                    </Col>
-                    <Col span={6}>
-                      <span
-                        style={{
-                          color: "#35C75A",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        32
-                      </span>
-                    </Col>
-                  </Row>
-                </div>
-              </Col>
-            </Row>
-          </Card>
-          <div className={styles.calendar}>
+          <CardSideBar
+            icon={<DesktopOutlined style={{ color: "#FF7506" }} />}
+            percent={90}
+            color={"#FF7506"}
+            title={"Thiết bị"}
+            quantity={devices.length}
+            data={[
+              {
+                type: "success",
+                text: "Đang hoạt động",
+                number: devices.filter((device) => device.isActive === true)
+                  .length,
+              },
+              {
+                type: "used",
+                text: "Ngưng hoạt động",
+                number: devices.filter((device) => device.isActive === false)
+                  .length,
+              },
+            ]}
+          />
+          <CardSideBar
+            icon={<DesktopOutlined style={{ color: "#4277FF" }} />}
+            percent={76}
+            color={"#4277FF"}
+            title={"Dịch vụ"}
+            quantity={services.length}
+            data={[
+              {
+                type: "success",
+                text: "Đang hoạt động",
+                number: services.filter((service) => service.isActive === true)
+                  .length,
+              },
+              {
+                type: "used",
+                text: "Ngưng hoạt động",
+                number: services.filter((service) => service.isActive === false)
+                  .length,
+              },
+            ]}
+          />
+          <CardSideBar
+            icon={<DesktopOutlined style={{ color: "#35C75A" }} />}
+            percent={86}
+            color={"#35C75A"}
+            title={"Cấp số"}
+            quantity={providerNumbers.length}
+            data={[
+              {
+                type: "success",
+                text: "Đã sử dụng",
+                number: providerNumbers.filter(
+                  (providerNumber) => providerNumber.status === "used"
+                ).length,
+              },
+              {
+                type: "used",
+                text: "Đang chờ",
+                number: providerNumbers.filter(
+                  (providerNumber) => providerNumber.status === "waiting"
+                ).length,
+              },
+              {
+                type: "error",
+                text: "Bỏ qua",
+                number: providerNumbers.filter(
+                  (providerNumber) => providerNumber.status === "skip"
+                ).length,
+              },
+            ]}
+          />
+          <div className={styles.calendarContainer}>
             <Calendar
-              style={{ width: "80%" }}
-              fullscreen={false}
-              // onPanelChange={onPanelChange}
+              calendarClassName={styles.calendar}
+              value={calendarValue}
+              onChange={(e) => setCalendarValue(e)}
+              colorPrimary="#FF7506"
+              colorPrimaryLight="#FFF2E7"
             />
           </div>
         </div>
@@ -581,4 +398,4 @@ const index = () => {
   );
 };
 
-export default index;
+export default Dashboard;

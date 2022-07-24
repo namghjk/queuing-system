@@ -4,101 +4,105 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   updateDoc,
-  where,
   setDoc,
 } from "firebase/firestore";
+import { Moment } from "moment";
 import { db } from "../../config/firebase";
 import { RootState } from "../index";
 
-export type roleType = {
+export type serviceType = {
   id?: string;
+  code: string;
   name: string;
   description: string;
-  amountOfUser?: number;
-  authorityA: string[] | undefined;
-  authorityB: string[] | undefined;
-  authorityC: string[] | undefined;
+  increaseStart?: number;
+  increaseEnd?: number;
+  prefix: string;
+  surfix: string;
+  reset: boolean;
+  isActive?: boolean;
 };
 
-export const addRole = createAsyncThunk(
-  "role/add",
-  async (values: roleType) => {
-    const newRole = doc(collection(db, "roles"));
-    await setDoc(newRole, values);
-    const roleRef = doc(db, "roles", newRole.id);
-    const roleSnap = await getDoc(roleRef);
-    return roleSnap;
+export const addService = createAsyncThunk(
+  "service/add",
+  async (values: serviceType) => {
+    const newDoc = doc(collection(db, "services"));
+    await setDoc(newDoc, values);
+    const Ref = doc(db, "service", newDoc.id);
+    const Snap = await getDoc(Ref);
+    return Snap;
   }
 );
 
 interface Ifilter {
+  active: boolean | null;
   keywords: string;
+  dateRange: [Moment, Moment] | null;
 }
 
 export const getAll = createAsyncThunk(
-  "role/getAll",
+  "service/getAll",
   async (filter?: Ifilter) => {
-    let roles: roleType[] = [];
+    let services: serviceType[] = [];
 
-    const queryRoles = await getDocs(collection(db, "roles"));
-    queryRoles.forEach((value) => {
-      roles.push({
+    const query = await getDocs(collection(db, "services"));
+    query.forEach((value) => {
+      services.push({
         id: value.id,
-        ...(value.data() as roleType),
+        ...(value.data() as serviceType),
       });
     });
-    for (const role of roles) {
-      const roleSnap = await getDocs(
-        query(collection(db, "user"), where("role", "==", role.id))
-      );
-      let amountOfUser = 0;
-      roleSnap.forEach((value) => {
-        amountOfUser += 1;
-      });
-      role.amountOfUser = amountOfUser;
-    }
     if (filter) {
+      console.log(filter.dateRange);
+      if (filter.active != null)
+        services = services.filter(
+          (service) => service.isActive == filter.active
+        );
       if (filter.keywords != "")
-        roles = roles.filter(
-          (role) =>
-            role.name.toLowerCase().includes(filter.keywords.toLowerCase()) ||
-            role.description
+        services = services.filter(
+          (service) =>
+            service.code
+              .toLowerCase()
+              .includes(filter.keywords.toLowerCase()) ||
+            service.name
+              .toLowerCase()
+              .includes(filter.keywords.toLowerCase()) ||
+            service.description
               .toLowerCase()
               .includes(filter.keywords.toLowerCase())
         );
     }
-    roles.reverse();
-    return roles;
+    services.reverse();
+    return services;
   }
 );
 
-export const get = createAsyncThunk("role/get", async (id: string) => {
-  let role: roleType;
+export const get = createAsyncThunk("service/get", async (id: string) => {
+  let service: serviceType;
 
-  const roleRef = doc(db, "roles", id);
-  const roleSnap = await getDoc(roleRef);
-  role = {
+  const serviceRef = doc(db, "services", id);
+  const serviceSnap = await getDoc(serviceRef);
+  service = {
     id,
-    ...(roleSnap.data() as roleType),
+    ...(serviceSnap.data() as serviceType),
   };
 
-  return role;
+  return service;
 });
 
 export const update = createAsyncThunk(
-  "role/update",
-  async (value: roleType) => {
-    const roleRef = doc(db, "roles", value.id as string);
-    await updateDoc(roleRef, value);
+  "service/update",
+  async ({ id, ...value }: serviceType) => {
+    const ref = doc(db, "services", id as string);
+    await updateDoc(ref, { ...value });
   }
 );
 
 interface defaultState {
   loading: boolean;
-  role: roleType | null;
-  roles: roleType[];
+  service: serviceType | null;
+  services: serviceType[];
   message: {
     fail: boolean;
     text: string | undefined;
@@ -107,33 +111,33 @@ interface defaultState {
 
 const initialState: defaultState = {
   loading: false,
-  role: null,
-  roles: [],
+  service: null,
+  services: [],
   message: {
     fail: false,
     text: "",
   },
 };
 
-const roleSlice = createSlice({
-  name: "role",
+const serviceSlice = createSlice({
+  name: "service",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(addRole.pending, (state, action) => {
+    builder.addCase(addService.pending, (state, action) => {
       state.loading = true;
     });
-    builder.addCase(addRole.fulfilled, (state, action) => {
+    builder.addCase(addService.fulfilled, (state, action) => {
       if (action.payload.exists()) {
         state.message.fail = false;
-        state.message.text = "Thêm vai trò thành công";
+        state.message.text = "Thêm thành công";
       } else {
         state.message.fail = true;
         state.message.text = "Đã xảy ra lỗi !";
       }
       state.loading = false;
     });
-    builder.addCase(addRole.rejected, (state, action) => {
+    builder.addCase(addService.rejected, (state, action) => {
       state.message.fail = true;
       state.message.text = action.error.message;
       state.loading = false;
@@ -144,7 +148,7 @@ const roleSlice = createSlice({
     });
     builder.addCase(getAll.fulfilled, (state, action) => {
       if (action.payload) {
-        state.roles = action.payload;
+        state.services = action.payload;
         state.message.fail = false;
         state.message.text = "";
       } else {
@@ -164,7 +168,7 @@ const roleSlice = createSlice({
     });
     builder.addCase(get.fulfilled, (state, action) => {
       if (action.payload) {
-        state.role = action.payload;
+        state.service = action.payload;
         state.message.fail = false;
         state.message.text = "";
       } else {
@@ -195,10 +199,10 @@ const roleSlice = createSlice({
   },
 });
 
-const roleReducer = roleSlice.reducer;
+const serviceReducer = serviceSlice.reducer;
 
-export const roleSelector = (state: RootState) => state.roleReducer;
+export const serviceSelector = (state: RootState) => state.serviceReducer;
 
-export const {} = roleSlice.actions;
+export const {} = serviceSlice.actions;
 
-export default roleReducer;
+export default serviceReducer;

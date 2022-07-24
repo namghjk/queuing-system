@@ -1,9 +1,23 @@
+import { useEffect } from "react";
 import { Card, Form, Input, Row, Col, Avatar, Typography } from "antd";
 import { CameraOutlined } from "@ant-design/icons";
+import { useAppDispatch, useAppSelector } from "../../../store/index";
+import { userSelector } from "../../../store/reducers/userSlice";
+import { roleSelector, get } from "../../../store/reducers/roleSlice";
 import avatarImage from "../../../Assets/avatar.svg";
 import styles from "./Info.module.scss";
 
-const index = () => {
+const Infor = () => {
+  const dispatch = useAppDispatch();
+  const { userLogin } = useAppSelector(userSelector);
+  const { role } = useAppSelector(roleSelector);
+
+  useEffect(() => {
+    if (userLogin) {
+      dispatch(get(userLogin.role));
+    }
+  }, [userLogin]);
+
   return (
     <div style={{ padding: "80px 104px 0 24px" }}>
       <Card bordered={false}>
@@ -16,7 +30,7 @@ const index = () => {
                   <CameraOutlined className={styles.icon} />
                 </div>
                 <Typography.Title className={styles.name}>
-                  Pham Dinh Phuong Nam
+                  {userLogin?.name}
                 </Typography.Title>
               </div>
             </Col>
@@ -27,7 +41,7 @@ const index = () => {
                     <Input
                       className={styles.input}
                       disabled
-                      value={"Pham Dinh Phuong Nam"}
+                      value={userLogin?.name}
                     />
                   </Form.Item>
                 </Col>
@@ -36,7 +50,7 @@ const index = () => {
                     <Input
                       className={styles.input}
                       disabled
-                      value={"phuongnam0907"}
+                      value={userLogin?.username}
                     />
                   </Form.Item>
                 </Col>
@@ -45,13 +59,17 @@ const index = () => {
                     <Input
                       className={styles.input}
                       disabled
-                      value={"0969696969"}
+                      value={userLogin?.phoneNumber}
                     />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
                   <Form.Item label="Mật khẩu">
-                    <Input className={styles.input} disabled value={"123"} />
+                    <Input
+                      className={styles.input}
+                      disabled
+                      value={userLogin?.password}
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
@@ -59,7 +77,7 @@ const index = () => {
                     <Input
                       className={styles.input}
                       disabled
-                      value={"namsgu123@gmail.com"}
+                      value={userLogin?.email}
                     />
                   </Form.Item>
                 </Col>
@@ -68,7 +86,7 @@ const index = () => {
                     <Input
                       className={styles.input}
                       disabled
-                      value={"Lập trình viên"}
+                      value={role?.name}
                     />
                   </Form.Item>
                 </Col>
@@ -81,4 +99,4 @@ const index = () => {
   );
 };
 
-export default index;
+export default Infor;

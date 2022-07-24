@@ -1,4 +1,3 @@
-import React from "react";
 import { Route, Routes } from "react-router-dom";
 import DevicesTable from "./DeviceTable";
 import AddDevices from "./AddDevices";
@@ -8,8 +7,8 @@ const index = () => {
   return (
     <Routes>
       <Route path="/add" element={<AddDevices />} />
-      <Route path="/edit" element={<AddDevices />} />
-      <Route path="/detail" element={<DetailDevices />} />
+      <Route path="/edit/:id" element={<AddDevices />} />
+      <Route path="/detail/:id" element={<DetailDevices />} />
       <Route path="/" element={<DevicesTable />} />
     </Routes>
   );

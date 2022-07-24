@@ -1,12 +1,30 @@
+import { useEffect } from "react";
 import { RollbackOutlined } from "@ant-design/icons";
 import { Card, Col, Row, Typography } from "antd";
 import clsx from "clsx";
-import { useNavigate } from "react-router-dom";
+import moment from "moment";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import {
+  providerNumberSelector,
+  get,
+} from "../../../../store/reducers/providerNumberSlice";
+import Status from "../../../components/Status";
 import ActionButton from "../../../components/ActionButton";
 import styles from "../Provider.module.scss";
 
 const DetailDevice = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const { loading, providerNumber } = useAppSelector(providerNumberSelector);
+
+  useEffect(() => {
+    if (id) {
+      dispatch(get(id));
+    }
+  }, [id]);
+
   return (
     <div className={styles.section}>
       <Typography.Title className={styles.title}>
@@ -29,7 +47,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Nguyễn Văn Hiền
+                      {providerNumber?.name}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -43,7 +61,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Kisok
+                      {providerNumber?.src}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -57,7 +75,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Khám tim mạch
+                      {providerNumber?.service}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -71,7 +89,24 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Đang chờ
+                      {providerNumber ? (
+                        <Status
+                          type={
+                            providerNumber.status == "skip"
+                              ? "error"
+                              : providerNumber.status
+                          }
+                          text={
+                            providerNumber.status == "waiting"
+                              ? "Đang chờ"
+                              : providerNumber.status == "used"
+                              ? "Đã sử dụng"
+                              : "Bỏ qua"
+                          }
+                        />
+                      ) : (
+                        ""
+                      )}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -85,7 +120,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      20011201
+                      {providerNumber?.number}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -99,21 +134,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      0969696969
-                    </Typography.Text>
-                  </Col>
-                </Row>
-              </Col>
-              <Col span={12}>
-                <Row className={styles.itemContainer}>
-                  <Col span={6}>
-                    <Typography.Text className={styles.label}>
-                      Số điện thoại:
-                    </Typography.Text>
-                  </Col>
-                  <Col span={18}>
-                    <Typography.Text className={styles.text}>
-                      0969696969
+                      {providerNumber?.phoneNumber}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -127,7 +148,9 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      {new Date().toDateString()}
+                      {moment(providerNumber?.timeGet.toDate()).format(
+                        "HH:mm - DD/MM/YYYY"
+                      )}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -141,7 +164,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      a@gmail.com
+                      {providerNumber?.email}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -155,7 +178,9 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      {new Date().toUTCString()}
+                      {moment(providerNumber?.timeExp.toDate()).format(
+                        "HH:mm - DD/MM/YYYY"
+                      )}
                     </Typography.Text>
                   </Col>
                 </Row>

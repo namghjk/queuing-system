@@ -1,12 +1,31 @@
+import { useEffect } from "react";
 import { EditOutlined } from "@ant-design/icons";
 import { Card, Col, Row, Typography } from "antd";
 import clsx from "clsx";
-import { useNavigate } from "react-router-dom";
-import ActionButton from "../../../components/ActionButton/index";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import { deviceSelector, get } from "../../../../store/reducers/deviceSlice";
+import {
+  serviceSelector,
+  getAll as getAllService,
+} from "../../../../store/reducers/serviceSlice";
+import ActionButton from "../../../components/ActionButton";
 import styles from "../Devices.module.scss";
 
 const DetailDevice = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const { loading, device } = useAppSelector(deviceSelector);
+  const { services } = useAppSelector(serviceSelector);
+
+  useEffect(() => {
+    if (id) {
+      dispatch(get(id));
+      dispatch(getAllService());
+    }
+  }, [id]);
+
   return (
     <div className={styles.section}>
       <Typography.Title className={styles.title}>
@@ -28,7 +47,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      KIO_01
+                      {device?.code}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -42,7 +61,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Kisok
+                      {device?.type}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -56,7 +75,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Kisok
+                      {device?.name}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -70,7 +89,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      Linkyo011
+                      {device?.username}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -84,7 +103,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      KIO_01
+                      {device?.ip}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -98,7 +117,7 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={18}>
                     <Typography.Text className={styles.text}>
-                      KIO_01
+                      {device?.password}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -112,7 +131,12 @@ const DetailDevice = () => {
                   </Col>
                   <Col span={24}>
                     <Typography.Text className={styles.text}>
-                      KIO_01
+                      {device?.services
+                        .map((value) => {
+                          return services.find((service) => service.id == value)
+                            ?.name;
+                        })
+                        .join(", ")}
                     </Typography.Text>
                   </Col>
                 </Row>
@@ -126,7 +150,7 @@ const DetailDevice = () => {
               {
                 text: "Cập nhật thiết bị",
                 icon: <EditOutlined />,
-                onClick: () => navigate("../edit"),
+                onClick: () => navigate(`../edit/${device?.id}`),
               },
             ]}
           />

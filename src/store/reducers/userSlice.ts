@@ -2,41 +2,60 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { RootState } from "../index";
+import { roleType } from "./roleSlice";
 
-type userType = {
-  username?: string;
-  password?: string;
-  email?: string;
+export type userType = {
+  id?: string;
+  username: string;
+  password: string;
+  email: string;
+  phoneNumber: string;
+  role: string;
+  name: string;
+  isActive: boolean;
 };
 
 export const login = createAsyncThunk(
   "user/login",
-  async ({ username, password }: userType) => {
-    let user = null;
-
+  async ({ username, password }: { username: string; password: string }) => {
+    let id = null;
     const usersRef = collection(db, "user");
-    const q = query(
-      usersRef,
-      where("username", "==", username),
-      where("password", "==", password)
+    const querySnapshot = await getDocs(
+      query(
+        usersRef,
+        where("username", "==", username),
+        where("password", "==", password)
+      )
     );
-
-    const querySnapshot = await getDocs(q);
-    console.log(querySnapshot);
     querySnapshot.forEach((doc) => {
-      user = doc.data();
+      id = doc.id;
       localStorage.setItem("userId", doc.id);
     });
-    return user;
+    return id;
   }
 );
+
+export const load = createAsyncThunk("user/load", async () => {
+  let user: userType;
+  let id = localStorage.getItem("userId");
+  const usersRef = doc(db, "user", id as string);
+
+  const userSnap = await getDoc(usersRef);
+  user = {
+    id: userSnap.id,
+    ...(userSnap.data() as userType),
+  };
+  return user;
+});
 
 export const findByEmail = createAsyncThunk(
   "user/verifyEmail",
@@ -47,7 +66,6 @@ export const findByEmail = createAsyncThunk(
     const q = query(usersRef, where("email", "==", email));
 
     const querySnapshot = await getDocs(q);
-    console.log(querySnapshot);
     querySnapshot.forEach((doc) => {
       userId = doc.id;
     });
@@ -55,39 +73,111 @@ export const findByEmail = createAsyncThunk(
   }
 );
 
-interface updateType {
+interface changePass {
   id: string;
-  value: userType;
+  password: string;
 }
-export const updateUser = createAsyncThunk(
+export const changePass = createAsyncThunk(
   "user/updateUser",
-  async ({ id, value }: updateType) => {
-    const userRef = doc(db, "user", id);
+  async ({ id, password }: changePass) => {
+    const userRef = doc(db, "user", id as string);
+    await updateDoc(userRef, { password });
+  }
+);
+
+export const update = createAsyncThunk(
+  "user/updateUser",
+  async (value: userType) => {
+    const userRef = doc(db, "user", value.id as string);
     await updateDoc(userRef, value);
   }
 );
 
+export const add = createAsyncThunk("user/add", async (values: userType) => {
+  const newUser = doc(collection(db, "user"));
+  await setDoc(newUser, values);
+  const userRef = doc(db, "user", newUser.id);
+  const userSnap = await getDoc(userRef);
+  return userSnap;
+});
+
+interface Ifilter {
+  active: boolean | null;
+  keywords: string;
+}
+
+export const getAll = createAsyncThunk(
+  "user/getAll",
+  async (filter?: Ifilter) => {
+    let users: userType[] = [];
+
+    const queryUser = await getDocs(collection(db, "user"));
+    queryUser.forEach((value) => {
+      users.push({
+        id: value.id,
+        ...(value.data() as userType),
+      });
+    });
+    for (const user of users) {
+      const roleSnap = await getDoc(doc(db, "roles", user.role as string));
+      user.role = (roleSnap.data() as roleType).name;
+    }
+    if (filter) {
+      if (filter.active != null)
+        users = users.filter((user) => user.isActive == filter.active);
+      if (filter.keywords != "")
+        users = users.filter(
+          (user) =>
+            user.username
+              .toLowerCase()
+              .includes(filter.keywords.toLowerCase()) ||
+            user.name.toLowerCase().includes(filter.keywords.toLowerCase()) ||
+            user.phoneNumber
+              .toLowerCase()
+              .includes(filter.keywords.toLowerCase()) ||
+            user.email.toLowerCase().includes(filter.keywords.toLowerCase()) ||
+            user.role.toLowerCase().includes(filter.keywords.toLowerCase())
+        );
+    }
+    users.reverse();
+    return users;
+  }
+);
+
+export const get = createAsyncThunk("user/get", async (id: string) => {
+  let user: userType;
+
+  const userSnap = await getDoc(doc(db, "user", id));
+  const roleSnap = await getDoc(
+    doc(db, "roles", (userSnap.data() as userType).role)
+  );
+  user = {
+    id,
+    ...(userSnap.data() as userType),
+    role: (roleSnap.data() as roleType).name,
+  };
+
+  return user;
+});
+
 interface defaultState {
-  userId: string;
   authLoading: boolean;
-  isAuthenticated: boolean;
-  user: {
-    id: string;
-    username: string;
-    password: string;
-    email: string;
-  } | null;
+  userId: string;
+  userLogin: userType | null;
+  user: userType | null;
+  users: userType[];
   message: {
     fail: boolean;
-    text: string;
+    text: string | undefined;
   };
 }
 
 const initialState: defaultState = {
-  userId: "",
   authLoading: false,
-  isAuthenticated: false,
+  userId: "",
+  userLogin: null,
   user: null,
+  users: [],
   message: {
     fail: false,
     text: "",
@@ -98,9 +188,9 @@ const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    logout(state, action) {
+    logout(state) {
       localStorage.removeItem("userId");
-      state.user = null;
+      state.userLogin = null;
     },
   },
   extraReducers: (builder) => {
@@ -109,13 +199,27 @@ const userSlice = createSlice({
     });
     builder.addCase(login.fulfilled, (state, action) => {
       if (action.payload) {
-        state.user = action.payload;
         state.message.fail = false;
         state.message.text = "Đăng nhập thành công";
       } else {
         state.message.fail = true;
         state.message.text = "Sai mật khẩu hoặc tên đăng nhập";
       }
+      state.authLoading = false;
+    });
+    builder.addCase(load.pending, (state, action) => {
+      state.authLoading = true;
+    });
+    builder.addCase(load.fulfilled, (state, action) => {
+      if (action.payload) {
+        state.userLogin = action.payload;
+      } else {
+        state.userLogin = null;
+      }
+      state.authLoading = false;
+    });
+    builder.addCase(load.rejected, (state, action) => {
+      state.userLogin = null;
       state.authLoading = false;
     });
     builder.addCase(findByEmail.pending, (state, action) => {
@@ -133,15 +237,57 @@ const userSlice = createSlice({
       }
       state.authLoading = false;
     });
-    builder.addCase(updateUser.pending, (state, action) => {
+
+    builder.addCase(getAll.pending, (state, action) => {
       state.authLoading = true;
     });
-    builder.addCase(updateUser.fulfilled, (state, action) => {
+    builder.addCase(getAll.fulfilled, (state, action) => {
+      if (action.payload) {
+        state.users = action.payload;
+        state.message.fail = false;
+        state.message.text = "";
+      } else {
+        state.message.fail = true;
+        state.message.text = "Đã xảy ra lỗi !";
+      }
       state.authLoading = false;
     });
-    builder.addCase(updateUser.rejected, (state, action) => {
+    builder.addCase(getAll.rejected, (state, action) => {
+      state.message.fail = true;
+      state.message.text = action.error.message;
       state.authLoading = false;
-      console.log("Failed to update user");
+    });
+
+    builder.addCase(get.pending, (state, action) => {
+      state.authLoading = true;
+    });
+    builder.addCase(get.fulfilled, (state, action) => {
+      if (action.payload) {
+        state.user = action.payload;
+        state.message.fail = false;
+        state.message.text = "";
+      } else {
+        state.message.fail = true;
+        state.message.text = "Đã xảy ra lỗi !";
+      }
+      state.authLoading = false;
+    });
+    builder.addCase(get.rejected, (state, action) => {
+      state.message.fail = true;
+      state.message.text = action.error.message;
+      state.authLoading = false;
+    });
+
+    builder.addCase(update.pending, (state, action) => {
+      state.authLoading = true;
+    });
+    builder.addCase(update.fulfilled, (state, action) => {
+      state.authLoading = false;
+    });
+    builder.addCase(update.rejected, (state, action) => {
+      state.message.fail = true;
+      state.message.text = action.error.message;
+      state.authLoading = false;
     });
   },
 });

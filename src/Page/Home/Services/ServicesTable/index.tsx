@@ -1,19 +1,19 @@
+import { useEffect, useState } from "react";
 import { CaretDownOutlined } from "@ant-design/icons";
-import {
-  Col,
-  DatePicker,
-  Form,
-  Row,
-  Select,
-  Space,
-  Table,
-  Typography,
-} from "antd";
+import { Col, Form, Row, Select, Space, Table, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { Moment } from "moment";
+import { RangeValue } from "rc-picker/lib/interface";
 import { Link, useNavigate } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import {
+  serviceSelector,
+  getAll,
+} from "../../../../store/reducers/serviceSlice";
 import Status from "../../../components/Status";
 import ActionButton from "../../../components/ActionButton";
 import SearchInput from "../../../components/SearchInput";
+import DatePicker from "../../../components/DateRange";
 import styles from "../Services.module.scss";
 
 const { Option } = Select;
@@ -54,62 +54,26 @@ const columns = [
   },
 ];
 
-const data = [
-  {
-    key: "1",
-    id: "KIO_01",
-    name: "Kisok",
-    description: "Mô tả dịch vụ 1",
-    active: <Status type="success" text="Hoạt động" />,
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-    update: (
-      <Link to="./edit" className={styles.link}>
-        Cập nhật
-      </Link>
-    ),
-  },
-  {
-    key: "2",
-    id: "KIO_01",
-    name: "Kisok",
-    description: "Mô tả dịch vụ 2",
-    active: <Status type="error" text="Ngưng hoạt động" />,
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-    update: (
-      <Link to="./edit" className={styles.link}>
-        Cập nhật
-      </Link>
-    ),
-  },
-  {
-    key: "3",
-    id: "KIO_01",
-    name: "Kisok",
-    description: "Mô tả dịch vụ 3",
-    active: <Status type="success" text="Hoạt động" />,
-    detail: (
-      <Link to="./detail" className={styles.link}>
-        Chi tiết
-      </Link>
-    ),
-    update: (
-      <Link to="./edit" className={styles.link}>
-        Cập nhật
-      </Link>
-    ),
-  },
-];
-
 const ServicesTable = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading, services } = useAppSelector(serviceSelector);
+  const [active, setActive] = useState<boolean | null>(null);
+  const [keywords, setKeywords] = useState<string>("");
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
+
+  useEffect(() => {
+    dispatch(
+      getAll({
+        active,
+        keywords,
+        dateRange: dateRange
+          ? [dateRange[0] as Moment, dateRange[1] as Moment]
+          : null,
+      })
+    );
+  }, [active, keywords, dateRange]);
+
   return (
     <div className={styles.section}>
       <Typography.Title className={styles.title}>
@@ -130,6 +94,8 @@ const ServicesTable = () => {
                 <Select
                   size="large"
                   defaultValue={null}
+                  value={active}
+                  onChange={(value) => setActive(value)}
                   suffixIcon={
                     <CaretDownOutlined
                       style={{
@@ -151,12 +117,7 @@ const ServicesTable = () => {
                   </Typography.Text>
                 }
               >
-                <Form.Item noStyle>
-                  <DatePicker size="large" />
-                </Form.Item>
-                <Form.Item noStyle>
-                  <DatePicker size="large" />
-                </Form.Item>
+                <DatePicker onChange={setDateRange} />
               </Form.Item>
             </Space>
           </Col>
@@ -168,7 +129,7 @@ const ServicesTable = () => {
                 </Typography.Text>
               }
             >
-              <SearchInput placeholder="Nhập từ khóa" />
+              <SearchInput placeholder="Nhập từ khóa" onSearch={setKeywords} />
             </Form.Item>
           </Col>
         </Row>
@@ -177,10 +138,39 @@ const ServicesTable = () => {
         <Col flex="auto">
           <Table
             columns={columns}
-            dataSource={data}
+            loading={loading}
+            dataSource={services.map((service) => {
+              return {
+                key: service.id,
+                id: service.code,
+                name: service.name,
+                description: service.description,
+                active: (
+                  <Status
+                    type={service.isActive ? "success" : "error"}
+                    text={service.isActive ? "Hoạt động" : "Ngưng hoạt động"}
+                  />
+                ),
+                detail: (
+                  <Link to={`./detail/${service.id}`} className={styles.link}>
+                    Chi tiết
+                  </Link>
+                ),
+                update: (
+                  <Link to={`./edit/${service.id}`} className={styles.link}>
+                    Cập nhật
+                  </Link>
+                ),
+              };
+            })}
             bordered
             size="middle"
-            pagination={{ position: ["bottomRight"] }}
+            pagination={{
+              defaultPageSize: 8,
+              position: ["bottomRight"],
+              showLessItems: true,
+              showSizeChanger: false,
+            }}
           />
         </Col>
         <Col flex="100px">
