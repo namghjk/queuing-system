@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import clsx from "clsx";
 import {
   Button,
   Card,
@@ -7,23 +9,109 @@ import {
   Input,
   Row,
   Typography,
+  message as notice,
 } from "antd";
-import clsx from "clsx";
-import { Link } from "react-router-dom";
+import { Timestamp } from "firebase/firestore";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import {
+  roleSelector,
+  addRole,
+  get,
+  update,
+} from "../../../../store/reducers/roleSlice";
+import { userSelector } from "../../../../store/reducers/userSlice";
+import { add } from "../../../../store/reducers/diarySlice";
 import styles from "./ManageRole.module.scss";
 
 const { Text, Title } = Typography;
 
+interface formValue {
+  name: string;
+  description: string;
+  authorityA: string[];
+  authorityB: string[];
+  authorityC: string[];
+}
+
 const AddManageRole = () => {
+  const [form] = Form.useForm();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading, role } = useAppSelector(roleSelector);
+  const { userLogin } = useAppSelector(userSelector);
+
+  const onFinish = (value: formValue) => {
+    if (id) {
+      dispatch(
+        update({
+          id,
+          ...value,
+          authorityA: value.authorityA ? value.authorityA : [],
+          authorityB: value.authorityB ? value.authorityB : [],
+          authorityC: value.authorityC ? value.authorityC : [],
+        })
+      ).then((data) => {
+        if (data.meta.requestStatus == "fulfilled") {
+          dispatch(get(id));
+          notice.success("Cập nhật thành công", 3);
+          dispatch(
+            add({
+              username: userLogin ? userLogin.username : "",
+              ip: "127.0.0.1",
+              action: "Cập nhật thông tin vai trò ",
+              time: Timestamp.fromDate(new Date()),
+            })
+          );
+        } else {
+          notice.error("Đã xảy ra lỗi", 3);
+        }
+      });
+    } else {
+      dispatch(
+        addRole({
+          ...value,
+          authorityA: value.authorityA ? value.authorityA : [],
+          authorityB: value.authorityB ? value.authorityB : [],
+          authorityC: value.authorityC ? value.authorityC : [],
+        })
+      ).then((data) => {
+        if (data.meta.requestStatus == "fulfilled") {
+          notice.success("Thêm thành công", 3);
+          navigate("../");
+          dispatch(
+            add({
+              username: userLogin ? userLogin.username : "",
+              ip: "127.0.0.1",
+              action: "Thêm vai trò ",
+              time: Timestamp.fromDate(new Date()),
+            })
+          );
+        } else {
+          notice.error("Đã xảy ra lỗi", 3);
+        }
+      });
+    }
+  };
+
+  useEffect(() => {
+    form.setFieldsValue(role);
+  }, [role]);
+  useEffect(() => {
+    if (id) {
+      dispatch(get(id));
+    }
+  }, []);
   return (
     <Form
       layout="vertical"
       name="role-add"
+      form={id ? form : undefined}
       className={clsx(styles.section, styles.section2)}
+      onFinish={onFinish}
     >
-      <Title level={2} className={styles.title}>
-        Quản lý tài khoản
-      </Title>
+      <Title className={styles.title}>Quản lý tài khoản</Title>
 
       <Row>
         <Col flex="auto">
@@ -76,7 +164,7 @@ const AddManageRole = () => {
                   <Card className={styles.cardCheckBox} bordered={false}>
                     <div>
                       <Title className={clsx(styles.title, styles.title2)}>
-                        Nhóm chức nắng A
+                        Nhóm chức năng A
                       </Title>
                       <Checkbox className={styles.checkbox}>
                         <Text className={styles.label}>Tất cả</Text>
@@ -92,7 +180,7 @@ const AddManageRole = () => {
                             <Text className={styles.label}>Chức năng y</Text>
                           </Checkbox>
                           <br />
-                          <Checkbox value="az">
+                          <Checkbox value="az" className={styles.checkbox}>
                             <Text className={styles.label}>Chức năng z</Text>
                           </Checkbox>
                         </Checkbox.Group>
@@ -101,7 +189,7 @@ const AddManageRole = () => {
 
                     <div>
                       <Title className={clsx(styles.title, styles.title2)}>
-                        Nhóm chức nắng B
+                        Nhóm chức năng B
                       </Title>
                       <Checkbox className={styles.checkbox}>
                         <Text className={styles.label}>Tất cả</Text>
@@ -126,7 +214,7 @@ const AddManageRole = () => {
 
                     <div>
                       <Title className={clsx(styles.title, styles.title2)}>
-                        Nhóm chức nắng C
+                        Nhóm chức năng C
                       </Title>
                       <Checkbox className={styles.checkbox}>
                         <Text className={styles.label}>Tất cả</Text>
@@ -168,8 +256,9 @@ const AddManageRole = () => {
             type="primary"
             className={styles.button}
             htmlType="submit"
+            loading={loading}
           >
-            Thêm
+            {loading ? "" : id ? "Cập nhật" : "Thêm"}
           </Button>
         </Col>
       </Row>

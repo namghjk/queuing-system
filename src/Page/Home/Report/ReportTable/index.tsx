@@ -1,7 +1,17 @@
-import { Col, DatePicker, Form, Row, Table, Typography } from "antd";
+import { useEffect, useState } from "react";
+import { Col, Form, Row, Table, Typography } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
+import { Excel } from "antd-table-saveas-excel";
+import moment, { Moment } from "moment";
+import { RangeValue } from "rc-picker/lib/interface";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import {
+  providerNumberSelector,
+  getAll,
+} from "../../../../store/reducers/providerNumberSlice";
 import Status from "../../../components/Status";
 import ActionButton from "../../../components/ActionButton";
+import DatePicker from "../../../components/DateRange";
 import styles from "../Report.module.scss";
 
 const columns = [
@@ -32,50 +42,22 @@ const columns = [
   },
 ];
 
-const data = [
-  {
-    key: "1",
-    stt: "201001",
-    name: "Khám tim mạch",
-    time: new Date().toString(),
-    status: <Status type="used" text="Đã sử dụng" />,
-    src: "Kisok",
-  },
-  {
-    key: "2",
-    stt: "201002",
-    name: "Răng hàm mặt",
-    time: new Date().toString(),
-    status: <Status type="waiting" text="Đang chờ" />,
-    src: "Hệ thống",
-  },
-  {
-    key: "3",
-    stt: "201003",
-    name: "Khám sản phụ khoa",
-    time: new Date().toString(),
-    status: <Status type="used" text="Đã sử dụng" />,
-    src: "Kisok",
-  },
-  {
-    key: "4",
-    stt: "201004",
-    name: "Tai mũi họng",
-    time: new Date().toString(),
-    status: <Status type="error" text="Bỏ qua" />,
-    src: "Kisok",
-  },
-  {
-    key: "5",
-    stt: "201005",
-    name: "Khám tổng quát",
-    time: new Date().toString(),
-    status: <Status type="waiting" text="Đang chờ" />,
-    src: "Hệ thống",
-  },
-];
-
 const ReportTable = () => {
+  const dispatch = useAppDispatch();
+  const { loading, providerNumbers } = useAppSelector(providerNumberSelector);
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
+
+  useEffect(() => {
+    dispatch(
+      getAll({
+        keywords: "",
+        dateRange: dateRange
+          ? [dateRange[0] as Moment, dateRange[1] as Moment]
+          : null,
+      })
+    );
+  }, [dateRange]);
+
   return (
     <div className={styles.section}>
       <Form layout="vertical">
@@ -88,12 +70,7 @@ const ReportTable = () => {
                 </Typography.Text>
               }
             >
-              <Form.Item noStyle>
-                <DatePicker size="large" />
-              </Form.Item>
-              <Form.Item noStyle>
-                <DatePicker size="large" />
-              </Form.Item>
+              <DatePicker onChange={setDateRange} />
             </Form.Item>
           </Col>
         </Row>
@@ -101,10 +78,42 @@ const ReportTable = () => {
           <Col flex="auto">
             <Table
               columns={columns}
-              dataSource={data}
+              loading={loading}
+              dataSource={providerNumbers.map((providerNumber) => {
+                return {
+                  key: providerNumber.id,
+                  stt: providerNumber.number,
+                  name: providerNumber.service,
+                  time: moment(providerNumber.timeGet.toDate()).format(
+                    "HH:mm - DD/MM/YYYY"
+                  ),
+                  status: (
+                    <Status
+                      type={
+                        providerNumber.status == "skip"
+                          ? "error"
+                          : providerNumber.status
+                      }
+                      text={
+                        providerNumber.status == "waiting"
+                          ? "Đang chờ"
+                          : providerNumber.status == "used"
+                          ? "Đã sử dụng"
+                          : "Bỏ qua"
+                      }
+                    />
+                  ),
+                  src: providerNumber.src,
+                };
+              })}
               bordered
               size="middle"
-              pagination={{ position: ["bottomRight"] }}
+              pagination={{
+                defaultPageSize: 8,
+                position: ["bottomRight"],
+                showLessItems: true,
+                showSizeChanger: false,
+              }}
             />
           </Col>
           <Col flex="100px">
@@ -113,6 +122,55 @@ const ReportTable = () => {
                 {
                   text: "Tải về",
                   icon: <DownloadOutlined />,
+                  onClick: () => {
+                    const excel = new Excel();
+                    excel
+                      .addSheet("Report")
+                      .addColumns([
+                        ...columns,
+                        {
+                          title: "Họ tên",
+                          key: "customer",
+                          dataIndex: "customer",
+                        },
+                        {
+                          title: "Số điện thoại",
+                          key: "phoneNumber",
+                          dataIndex: "phoneNumber",
+                        },
+                        {
+                          title: "Email",
+                          key: "email",
+                          dataIndex: "email",
+                        },
+                      ])
+                      .addDataSource(
+                        providerNumbers.map((providerNumber) => {
+                          return {
+                            key: providerNumber.id,
+                            stt: providerNumber.number,
+                            name: providerNumber.service,
+                            time: moment(
+                              providerNumber.timeGet.toDate()
+                            ).format("HH:mm - DD/MM/YYYY"),
+                            status:
+                              providerNumber.status == "waiting"
+                                ? "Đang chờ"
+                                : providerNumber.status == "used"
+                                ? "Đã sử dụng"
+                                : "Bỏ qua",
+                            src: providerNumber.src,
+                            customer: providerNumber.name,
+                            phoneNumber: providerNumber.phoneNumber,
+                            email: providerNumber.email,
+                          };
+                        }),
+                        {
+                          str2Percent: true,
+                        }
+                      )
+                      .saveAs("Report.xlsx");
+                  },
                 },
               ]}
             />

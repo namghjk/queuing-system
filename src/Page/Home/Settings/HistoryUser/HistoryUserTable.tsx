@@ -1,5 +1,11 @@
-import { Col, DatePicker, Form, Row, Table, Typography } from "antd";
+import { useEffect, useState } from "react";
+import { Col, Form, Row, Table, Typography } from "antd";
+import moment, { Moment } from "moment";
+import { RangeValue } from "rc-picker/lib/interface";
+import { useAppSelector, useAppDispatch } from "../../../../store";
+import { diarySelector, getAll } from "../../../../store/reducers/diarySlice";
 import SearchInput from "../../../components/SearchInput";
+import DatePicker from "../../../components/DateRange";
 import styles from "./HistoryUser.module.scss";
 
 const columns = [
@@ -28,33 +34,23 @@ const columns = [
   },
 ];
 
-const data = [
-  {
-    key: "1",
-    username: "nam09072001",
-    time: new Date().toString(),
-    ip: "111.111.111.111",
-    actionImplemented: "Cập nhật thông tin dịch vụ",
-  },
-
-  {
-    key: "2",
-    username: "nam09072001",
-    time: new Date().toString(),
-    ip: "111.111.111.111",
-    actionImplemented: "Cập nhật thông tin dịch vụ",
-  },
-
-  {
-    key: "3",
-    username: "nam09072001",
-    time: new Date().toString(),
-    ip: "111.111.111.111",
-    actionImplemented: "Cập nhật thông tin dịch vụ",
-  },
-];
-
 const HistoryUserTable = () => {
+  const dispatch = useAppDispatch();
+  const { loading, diaries } = useAppSelector(diarySelector);
+  const [keywords, setKeywords] = useState<string>("");
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
+
+  useEffect(() => {
+    dispatch(
+      getAll({
+        keywords,
+        dateRange: dateRange
+          ? [dateRange[0] as Moment, dateRange[1] as Moment]
+          : null,
+      })
+    );
+  }, [keywords, dateRange]);
+
   return (
     <div className={styles.section}>
       <Form layout="vertical">
@@ -67,12 +63,7 @@ const HistoryUserTable = () => {
                 </Typography.Text>
               }
             >
-              <Form.Item noStyle>
-                <DatePicker size="large" />
-              </Form.Item>
-              <Form.Item noStyle>
-                <DatePicker size="large" />
-              </Form.Item>
+              <DatePicker onChange={setDateRange} />
             </Form.Item>
           </Col>
           <Col flex="300px">
@@ -83,7 +74,7 @@ const HistoryUserTable = () => {
                 </Typography.Text>
               }
             >
-              <SearchInput placeholder="Nhập từ khóa" />
+              <SearchInput placeholder="Nhập từ khóa" onSearch={setKeywords} />
             </Form.Item>
           </Col>
         </Row>
@@ -91,10 +82,22 @@ const HistoryUserTable = () => {
           <Col flex="auto">
             <Table
               columns={columns}
-              dataSource={data}
+              loading={loading}
+              dataSource={diaries.map((diary) => ({
+                key: diary.id,
+                username: diary.username,
+                time: moment(diary.time.toDate()).format("HH:mm - DD/MM/YYYY"),
+                ip: diary.ip,
+                actionImplemented: diary.action,
+              }))}
               bordered
               size="middle"
-              pagination={{ position: ["bottomRight"] }}
+              pagination={{
+                defaultPageSize: 8,
+                position: ["bottomRight"],
+                showLessItems: true,
+                showSizeChanger: false,
+              }}
             />
           </Col>
           <Col flex="100px"></Col>
