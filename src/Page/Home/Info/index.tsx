@@ -7,7 +7,7 @@ import { roleSelector, get } from "../../../store/reducers/roleSlice";
 import avatarImage from "../../../Assets/avatar.svg";
 import styles from "./Info.module.scss";
 
-const Infor = () => {
+const Info = () => {
   const dispatch = useAppDispatch();
   const { userLogin } = useAppSelector(userSelector);
   const { role } = useAppSelector(roleSelector);
@@ -99,4 +99,4 @@ const Infor = () => {
   );
 };
 
-export default Infor;
+export default Info;
