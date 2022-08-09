@@ -11,7 +11,9 @@ import {
 import { Button, MenuProps } from "antd";
 import { Menu } from "antd";
 import clsx from "clsx";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from '../../../store/index'
+import { userSelector, logout } from "../../../store/reducers/userSlice";
 import Logo from "../../../Assets/logo.svg";
 import styles from "./SideBar.module.scss";
 
@@ -67,6 +69,10 @@ const items: MenuItem[] = [
 
 const SideBar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { userLogin } = useAppSelector(userSelector);
+
   return (
     <div className={clsx(styles.sideBar)}>
       <div>
@@ -84,6 +90,10 @@ const SideBar = () => {
           ghost
           htmlType="submit"
           icon={<ExportOutlined />}
+          onClick={() =>  {
+            dispatch(logout())
+            navigate("/auth/login")
+        }}
         >
           <Link to="/auth/login">Đăng xuất</Link>
         </Button>
